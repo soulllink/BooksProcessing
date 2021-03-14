@@ -3,7 +3,7 @@
 
 ## Universal BookStatisticProcessor
 
-WIP
+Analize books, words frequency and minor statistic.
 
 ## Bookprocessing
 
