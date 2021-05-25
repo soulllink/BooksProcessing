@@ -7,17 +7,8 @@ use std::io;
 use std::io::{BufRead, BufReader};
 use std::string::ToString;
 
-fn insert(conn: &mut Connection, dbname: &String, word: String, freq: u32) {
-    conn.execute(
-        format!(
-            "INSERT INTO {name} (words, freq) VALUES (?1, ?2)",
-            name = dbname.replace(".", "")
-        )
-        .as_str(),
-        &[&word, &freq.to_string()],
-    )
-    .unwrap();
-}
+//import
+mod Database;
 
 fn main() {
     //IOinput
@@ -34,24 +25,16 @@ fn main() {
     println!("|{}|", filename.clone());
     let file = File::open(filename).unwrap();
     let reader = BufReader::new(file);
+    
+    //Database init
+    let DataSQL = Database::new(&dataname);
+    DataSQL.exec();
+    let mut trxs: HashMap<String, u32> = HashMap::new();
+
     //
     // startmapping
     //
     let mut frequency: HashMap<String, u32> = HashMap::new();
-    let mut conn = Connection::open("data.db").unwrap();
-    conn.execute(
-        format!(
-            "CREATE TABLE IF NOT EXISTS {name} (
-        id INTEGER PRIMARY KEY,
-        words TEXT,
-        freq INTEGER
-      )",
-            name = dataname.clone().replace(".", "")
-        )
-        .as_str(),
-        NO_PARAMS,
-    )
-    .unwrap();
 
     for line in reader.lines() {
         let line = line.unwrap();
@@ -79,6 +62,7 @@ fn main() {
     println!("{:?}", frequency);
 
     for (s, fq) in frequency {
-        insert(&mut conn, &dataname, s, fq);
+        //insert(&mut conn, &dataname, s, fq);
+        collector(&trxs, s, fq);
     }
 }
