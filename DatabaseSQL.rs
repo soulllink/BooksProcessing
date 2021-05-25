@@ -2,14 +2,14 @@ use rusqlite::{Connection, NO_PARAMS};
 use std::collections::HashMap;
 
 #[derive(Debug)]
-struct Database {
+struct DatabaseSQL {
     conn: Connection,
     dbname: String,
 }
 
-impl Database {
-    fn new(name: String) -> Database {
-        Database {
+impl DatabaseSQL {
+    fn new(name: String) -> DatabaseSQL {
+        DatabaseSQL {
             conn: Connection::open("data.db").unwrap(),
             dbname: name,
         }
@@ -29,7 +29,7 @@ impl Database {
         )
         .unwrap()
     }
-    fn insert(&self) {
+    fn insert(&self, word: String, freq: u32) {
         &self
             .conn
             .execute(
@@ -45,7 +45,7 @@ impl Database {
     fn transaction(&self, trxs: HashMap) {
         let tx = &self.conn.transaction;
             
-        for s, fq in trxs {
+        for (s, fq) in trxs.iter() {
             tx.execute(format!(
                     "INSERT INTO {name} (words, freq) VALUES (?1, ?2)", 
                     name = &self.dbname.replace(".", "")
@@ -63,9 +63,11 @@ fn collector(trxs: HashMap, word: String, freq: u32) {
     *trxs.insert( word, freq )
 }
 
-fn sender(trxs: HashMap) {
+fn sender(trxs: HashMap, consql: DatabaseSQL) {
     if *trxs.capacity() >= 10 {
-        DataSQL.transaction(&trxs)
+        *consql.transaction(&trxs);
+        *trxs.clear();
+    }
 }
 
 

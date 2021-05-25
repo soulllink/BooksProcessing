@@ -8,7 +8,11 @@ use std::io::{BufRead, BufReader};
 use std::string::ToString;
 
 //import
-mod Database;
+mod DatabaseSQL;
+use crate::DatabaseSQL::collector;
+use crate::DatabaseSQL::sender;
+use crate::DatabaseSQL::DatabaseSQL;
+
 
 fn main() {
     //IOinput
@@ -27,7 +31,7 @@ fn main() {
     let reader = BufReader::new(file);
     
     //Database init
-    let DataSQL = Database::new(&dataname);
+    let DataSQL: DatabaseSQL = DatabaseSQL.new(&dataname);
     DataSQL.exec();
     let mut trxs: HashMap<String, u32> = HashMap::new();
 
@@ -64,5 +68,6 @@ fn main() {
     for (s, fq) in frequency {
         //insert(&mut conn, &dataname, s, fq);
         collector(&trxs, s, fq);
+        sender(&trxs, &DataSQL);
     }
 }
