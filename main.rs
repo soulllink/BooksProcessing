@@ -1,5 +1,5 @@
 use regex::Regex;
-use rusqlite::{Connection, NO_PARAMS};
+use rusqlite::{Connection, Result, Transaction, NO_PARAMS};
 use std::char::ToLowercase;
 use std::collections::HashMap;
 use std::fs::File;
@@ -7,12 +7,75 @@ use std::io;
 use std::io::{BufRead, BufReader};
 use std::string::ToString;
 
-//import
-mod DatabaseSQL;
-use crate::DatabaseSQL::collector;
-use crate::DatabaseSQL::sender;
-use crate::DatabaseSQL::DatabaseSQL;
+struct DatabaseSQL {
+    conn: Connection,
+    dbname: String,
+}
 
+impl DatabaseSQL {
+    fn new(name: String) -> DatabaseSQL {
+        DatabaseSQL {
+            conn: Connection::open("data.db").unwrap(),
+            dbname: name,
+        }
+    }
+    fn exec(&self) {
+        &self
+            .conn
+            .execute(
+                format!(
+                    "CREATE TABLE IF NOT EXISTS {name} (
+            id INTEGER PRIMARY KEY,
+            words TEXT,
+            freq INTEGER
+          )",
+                    name = &self.dbname.clone().replace(".", "")
+                )
+                .as_str(),
+                NO_PARAMS,
+            )
+            .unwrap()
+    }
+    fn insert(&self, word: String, freq: u32) {
+        &self
+            .conn
+            .execute(
+                format!(
+                    "INSERT INTO {name} (words, freq) VALUES (?1, ?2)",
+                    name = &self.dbname.replace(".", "")
+                )
+                .as_str(),
+                &[&word, &freq.to_string()],
+            )
+            .unwrap()
+    }
+    fn transaction(&self, trxs: HashMap<String, u32>) {
+        let tx = &self.conn.transaction();
+        for (s, fq) in trxs.iter() {
+            tx.execute(
+                format!(
+                    "INSERT INTO {name} (words, freq) VALUES (?1, ?2)",
+                    name = &self.dbname.replace(".", "")
+                )
+                .as_str(),
+                &[&s, &fq.to_string()],
+            );
+        }
+
+        tx.commit();
+    }
+}
+
+fn collector(trxs: HashMap<String, u32>, word: String, freq: u32) {
+    trxs.insert(word, freq)
+}
+
+fn sender(mut trxs: HashMap<String, u32>, consql: DatabaseSQL) {
+    if assert!(trxs.capacity() >= 10) {
+        consql.transaction(&trxs);
+        trxs.clear();
+    };
+}
 
 fn main() {
     //IOinput
@@ -29,9 +92,8 @@ fn main() {
     println!("|{}|", filename.clone());
     let file = File::open(filename).unwrap();
     let reader = BufReader::new(file);
-    
     //Database init
-    let DataSQL: DatabaseSQL = DatabaseSQL.new(&dataname);
+    let DataSQL = DatabaseSQL::new(&dataname);
     DataSQL.exec();
     let mut trxs: HashMap<String, u32> = HashMap::new();
 
