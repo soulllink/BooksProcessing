@@ -1,18 +1,16 @@
 [package]
-name = "booksprocessing"
+name = "books2"
 version = "0.1.0"
-authors = ["soulllink <soullinkslsl@yandex.ru>"]
+authors = ["excelebi"]
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-regex = "1"
+regex = '1'
 
 [dependencies.rusqlite]
-version = "0.24.2"
+version = "0.25.3"
 features = ["bundled"]
 
-[[bin]]
-name = "booksprocessing"
-path = "main.rs"
+
